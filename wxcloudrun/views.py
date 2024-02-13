@@ -4,6 +4,7 @@ from run import app
 from wxcloudrun.dao import delete_counterbyid, query_counterbyid, insert_counter, update_counterbyid
 from wxcloudrun.user.dao import insert_user
 from wxcloudrun.model import Counters
+from wxcloudrun.user.model import User
 from wxcloudrun.response import make_succ_empty_response, make_succ_response, make_err_response
 from wxcloudrun.util import generate_uid
 
