@@ -34,7 +34,13 @@ def register():
     user.uid =uid
     user.created_at = datetime.now()
     user.updated_at = datetime.now()
-    insert_user(user)
+    try:
+        insert_user(user)
+        return make_succ_response(uid)
+    except Exception as e:
+        return make_err_response(e)
+
+
 
 
 @app.route('/api/count', methods=['POST'])
