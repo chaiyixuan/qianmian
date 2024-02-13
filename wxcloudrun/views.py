@@ -2,9 +2,10 @@ from datetime import datetime
 from flask import render_template, request
 from run import app
 from wxcloudrun.dao import delete_counterbyid, query_counterbyid, insert_counter, update_counterbyid
+from wxcloudrun.user.dao import insert_user
 from wxcloudrun.model import Counters
 from wxcloudrun.response import make_succ_empty_response, make_succ_response, make_err_response
-
+from wxcloudrun.util import generate_uid
 
 @app.route('/')
 def index():
@@ -12,6 +13,27 @@ def index():
     :return: 返回index页面
     """
     return render_template('index.html')
+
+
+@app.route('/api/user/register', methods=['POST'])
+def register():
+    """
+    注册用户
+    :return:
+    """
+
+    # 获取请求体参数
+    params = request.get_json()
+
+    username = params['username']
+
+    uid=generate_uid()
+    user = User()
+    user.username = username
+    user.uid =uid
+    user.created_at = datetime.now()
+    user.updated_at = datetime.now()
+    insert_user(user)
 
 
 @app.route('/api/count', methods=['POST'])
