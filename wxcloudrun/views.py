@@ -1,12 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timedelta 
 from flask import render_template, request
 from run import app
 from wxcloudrun.dao import delete_counterbyid, query_counterbyid, insert_counter, update_counterbyid
-from wxcloudrun.user.dao import insert_user
+from wxcloudrun.user.dao import *
+from wxcloudrun.user.model import *
+from wxcloudrun.member.dao import *
+from wxcloudrun.member.model import *
+from wxcloudrun.order.dao import *
+from wxcloudrun.order.model import *
 from wxcloudrun.model import Counters
-from wxcloudrun.user.model import User
+import requests
 from wxcloudrun.response import make_succ_empty_response, make_succ_response, make_err_response
 from wxcloudrun.util import generate_uid
+import os
+
+APPID = os.environ.get('WEIXIN_APPID')
+SECRET = os.environ.get('WEIXIN_SECRET')
 
 @app.route('/')
 def index():
@@ -40,9 +49,87 @@ def register():
     except Exception as e:
         return make_err_response(e)
 
+app.route('/api/member/buy_membership', methods=['POST'])
+def buy_membership():
+    """
+    用户购买会员
+    :return:
+    """
 
+    # 获取请求体参数
+    params = request.get_json()
 
+    uid = params['uid']
+    orderDesc = params['orderDesc']
+    member_type = params.get('memberType', 0)  # 1为普通会员，2为超级会员
 
+    # 查询用户是否存在，以及是否已经是会员
+    # 这里是查询数据库的逻辑，根据实际情况实现
+    user = query_userbyid(uid)
+    if not user:
+        return make_err_response('用户不存在')
+
+    # 用户已经是会员，检查会员类型和有效期 
+    if user.member.memberType!=0:
+        # 2会员续费1会员
+        if user.member.member_type > member_type:
+            return make_err_response('已经是更高级别的会员')
+        # 同级别会员增加时间
+        elif user.member.member_type == member_type: # 续费
+            user.member.memberEnd = user.member.memberEnd + timedelta(days=90)
+            # 这里是处理支付逻辑，根据实际情况实现
+            # 需要更新会员类型和有效期
+            insert_member(user.member)
+        # 低级别会员购买高级别 可以将剩余的VIP会员时间按比例计算其价值，然后从SVIP会员费用中扣除
+        else user.member.member_type < member_type:
+            pass
+    # 非会员
+    else:
+        user.member.memberEnd = user.member.memberEnd + timedelta(days=90)
+        # 用户不是会员，创建会员记录
+        insert_member(user.member)
+
+    
+    
+
+    return make_succ_response('购买会员成功')
+
+@app.route('/api/user/getopenid',methods=['GET'])
+def get_openid():
+    # 获取请求体参数
+    params = request.get_json()
+    JSCODE = params['code']
+    # 构造请求的URL
+    url = "https://api.weixin.qq.com/sns/jscode2session"
+    params = {
+        "appid": APPID,
+        "secret": SECRET,
+        "js_code": JSCODE,
+        "grant_type": "authorization_code"
+    }
+
+    # 发送GET请求
+    response = requests.get(url, params=params)
+
+    # 检查响应状态码
+    if response.status_code == 200:
+        # 请求成功，处理响应数据
+        data = response.json() 
+        # {
+        # "openid":"xxxxxx",
+        # "session_key":"xxxxx",
+        # "unionid":"xxxxx",
+        # "errcode":0,
+        # "errmsg":"xxxxx"
+        # }
+ 
+
+        return make_succ_response('get_openid 错误')
+    else:
+        return make_err_response('')
+    
+    
+    
 @app.route('/api/count', methods=['POST'])
 def count():
     """
