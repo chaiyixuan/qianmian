@@ -94,7 +94,7 @@ def buy_membership():
 
     return make_succ_response('购买会员成功')
 
-@app.route('/api/user/getopenid',methods=['GET'])
+@app.route('/api/user/get_openid',methods=['GET'])
 def get_openid():
     # 获取请求体参数
     params = request.get_json()
