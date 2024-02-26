@@ -1,5 +1,13 @@
 {
-  "containers": [],
+  "containers": [
+    {
+      "name": "qianmian",
+      "domain": "",
+      "ip": "",
+      "mode": "compose",
+      "containerId": "a75f3cc87e1e18f9554026ba70e6738654d4d506e2ccf642164bf55c38d5ad09"
+    }
+  ],
   "config": {
     "qianmian": {
       "containerPort": 80,
