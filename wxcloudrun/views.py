@@ -107,7 +107,7 @@ def buy_membership():
     return make_succ_response("购买会员成功")
 
 
-@app.route("/api/user/getopenid", methods=["GET"])
+@app.route("/api/user/getopenid", methods=["POST"])
 def get_openid():
     # 获取请求体参数
     params = request.get_json()
@@ -136,7 +136,7 @@ def get_openid():
         # "errmsg":"xxxxx"
         # }
 
-        return make_succ_response("get_openid 错误")
+        return make_succ_response(data)
     else:
         return make_err_response("")
 
