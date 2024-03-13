@@ -7,15 +7,28 @@ from wxcloudrun.dao import (
     insert_counter,
     update_counterbyid,
 )
-from wxcloudrun.user.dao import query_userbyid, delete_userbyid, insert_user, update_userbyid
+import logging
+from wxcloudrun.user.dao import (
+    query_userbyid,
+    delete_userbyid,
+    insert_user,
+    update_userbyid,
+)
 from wxcloudrun.user.model import User
 from wxcloudrun.member.dao import insert_member, update_memberbyid, query_memberbyid
 from wxcloudrun.member.model import Member
+from wxcloudrun.knowlagebase.dao import (
+    query_knowlage_base_by_uid,
+    query_knowlage_base_by_kid,
+)
+from wxcloudrun.knowlagebase.model import KnowlageBase
 from wxcloudrun.order.dao import update_orderbyid, insert_order, query_orderbyid
 from wxcloudrun.order.model import Order
 from wxcloudrun.model import Counters
 import requests
 
+
+# from wxcloudrun.local_config import Config
 
 from wxcloudrun.response import (
     make_succ_empty_response,
@@ -25,8 +38,27 @@ from wxcloudrun.response import (
 from wxcloudrun.util import generate_uid
 import os
 
-APPID = os.environ.get("WEIXIN_APPID")
-SECRET = os.environ.get("WEIXIN_SECRET")
+# 初始化日志
+logger = logging.getLogger("log")
+
+is_debug = True
+
+
+if is_debug:
+    # config = Config()
+    # APPID = config.APPID
+    # SECRET = config.SECRET
+    APPID = "wx57b3c2810bee13d6"
+    SECRET = "aade11c5245ce3acc0aef6d81bd010cc"
+    print(APPID)
+    print(SECRET)
+
+    WEIXIN_URL = "wxcloud-localdebug-proxy-91759-7-1323921410.sh.run.tcloudbase.com"
+    WEIXIN_URL = "api.weixin.qq.com:80"
+else:
+    APPID = os.environ.get("WEIXIN_APPID")
+    SECRET = os.environ.get("WEIXIN_SECRET")
+    WEIXIN_URL = "api.weixin.qq.com"
 
 
 @app.route("/")
@@ -113,21 +145,38 @@ def get_openid():
     params = request.get_json()
     JSCODE = params["code"]
     # 构造请求的URL
-    url = "https://api.weixin.qq.com/sns/jscode2session"
+    url = "https://" + WEIXIN_URL + "/sns/jscode2session"
     params = {
         "appid": APPID,
         "secret": SECRET,
         "js_code": JSCODE,
         "grant_type": "authorization_code",
     }
+    logger.error("get_openid")
 
     # 发送GET请求
-    response = requests.get(url, params=params)
+    # response = requests.get(url, params=params)
 
     # 检查响应状态码
-    if response.status_code == 200:
-        # 请求成功，处理响应数据
-        data = response.json()
+    # if response.status_code == 200:
+    # 请求成功，处理响应数据
+
+    # data = response.json()
+
+    # openid = data.openid
+    openid = "123ccx2"
+    user = query_userbyid(openid)
+    # 我们的表里面已经有该用户
+    if user:
+        logger.error("login success")
+    else:
+        # 没有用户就注册
+        user = User()
+        user.username = "username0302"
+        user.uid = openid
+        insert_user(user)
+        # TODO: 是否要插入member表
+
         # {
         # "openid":"xxxxxx",
         # "session_key":"xxxxx",
@@ -136,9 +185,10 @@ def get_openid():
         # "errmsg":"xxxxx"
         # }
 
-        return make_succ_response(data)
-    else:
-        return make_err_response("")
+    return make_succ_response(str(openid))
+    # else:
+    #     logger.error("error{}".format(url))
+    #     return make_err_response(response.status_code)
 
 
 @app.route("/api/count", methods=["POST"])
@@ -193,3 +243,38 @@ def get_count():
     return (
         make_succ_response(0) if counter is None else make_succ_response(counter.count)
     )
+
+
+@app.route("/api/knowlage/get_knowlages", methods=["GET"])
+def get_knowlages():
+    """
+    :return: 根据uid查文章
+    """
+    try:
+        uid = request.args.get("uid", default="002")
+
+        knowlage_bases = query_knowlage_base_by_uid(uid)
+        # knowlage_bases = queryToDict(knowlage_bases)
+        kid_list = [{"kid": entity.kid} for entity in knowlage_bases]
+    except Exception as e:
+        return make_err_response(str(e))
+    # logger.error("knowlage_bases{}".format(kid_list))
+    return make_succ_response(kid_list)
+
+
+@app.route("/api/knowlage/get_knowlage_detail", methods=["POST"])
+def get_knowlage_by_kid():
+    """
+    :return: 根据uid查文章
+    """
+    try:
+        params = request.get_json()
+        kid = params["kid"]
+        knowlage_base = query_knowlage_base_by_kid(kid)
+        kb_obj = {"kid": knowlage_base.kid, "content": knowlage_base.content}
+    except Exception as e:
+        return make_err_response(str(e))
+
+    # print("knowlage_base",knowlage_base)
+    # logger.error("knowlage_base{}".format(knowlage_base.to_dict()))
+    return make_succ_response(kb_obj)

@@ -18,7 +18,9 @@ services:
       - MYSQL_USERNAME=root
       - MYSQL_PASSWORD=Cyx4161753!
       - MYSQL_ADDRESS=10.29.103.86:3306
-
+      - MYSQL_USERNAME=
+      - MYSQL_PASSWORD=
+      - MYSQL_ADDRESS=
 networks:
   default:
     external:
