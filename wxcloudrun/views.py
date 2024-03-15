@@ -48,13 +48,13 @@ if is_debug:
     # config = Config()
     # APPID = config.APPID
     # SECRET = config.SECRET
-    APPID = "wx57b3c2810bee13d6"
-    SECRET = "aade11c5245ce3acc0aef6d81bd010cc"
+    APPID = ""
+    SECRET = ""
     print(APPID)
     print(SECRET)
 
-    WEIXIN_URL = "wxcloud-localdebug-proxy-91759-7-1323921410.sh.run.tcloudbase.com"
-    WEIXIN_URL = "api.weixin.qq.com:80"
+    # WEIXIN_URL = "wxcloud-localdebug-proxy-91759-7-1323921410.sh.run.tcloudbase.com"
+    WEIXIN_URL = "api.weixin.qq.com"
 else:
     APPID = os.environ.get("WEIXIN_APPID")
     SECRET = os.environ.get("WEIXIN_SECRET")
@@ -137,6 +137,51 @@ def buy_membership():
         insert_member(user.member)
 
     return make_succ_response("购买会员成功")
+
+@app.route("/api/user/login", methods=["POST"])
+def do_login():
+    # 获取请求体参数
+    unionID = request.headers.get('X-WX-UNIONID')
+    return make_succ_response(
+        {
+            "unionID": unionID
+        }
+    )
+    
+
+@app.route("/api/user/get_union_id", methods=["POST"])
+def get_unionID():
+    # 获取请求体参数
+    params = request.get_json()
+    JSCODE = params["code"]
+    # 构造请求的URL
+    url = "https://" + WEIXIN_URL + "/sns/jscode2session"
+    params = {
+        "appid": APPID,
+        "secret": SECRET,
+        "js_code": JSCODE,
+        "grant_type": "authorization_code",
+    }
+    logger.error("get_union_id")
+
+    # 发送GET请求
+    response = requests.get(url, params=params)
+
+    # 检查响应状态码
+    # if response.status_code == 200:
+    # 请求成功，处理响应数据
+    logger.error(response)
+    data = response.json()
+    if data["errcode"] == 0:
+        return make_succ_response(
+            {
+                "unionid": data["unionid"],
+                "session_key": data["session_key"],
+                "errcode": data["errcode"],
+            }
+        )
+    else:
+        return make_err_response({"errcode": data["errcode"], "errmsg": data["errmsg"]})
 
 
 @app.route("/api/user/getopenid", methods=["POST"])
