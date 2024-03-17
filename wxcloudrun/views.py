@@ -141,9 +141,11 @@ def buy_membership():
 @app.route("/api/user/login", methods=["POST"])
 def login():
     # 获取请求体参数s
-    unionID = request.headers.get('X-WX-UNIONID')
+   
+    openID = request.headers.get('x-wx-openid')
+    unionID = request.headers.get('x-wx-unionid')
     return make_succ_response(
-        {
+        {   "openID": openID,
             "unionID": unionID
         }
     )
