@@ -139,8 +139,8 @@ def buy_membership():
     return make_succ_response("购买会员成功")
 
 @app.route("/api/user/login", methods=["POST"])
-def do_login():
-    # 获取请求体参数
+def login():
+    # 获取请求体参数s
     unionID = request.headers.get('X-WX-UNIONID')
     return make_succ_response(
         {
@@ -150,7 +150,7 @@ def do_login():
     
 
 @app.route("/api/user/get_union_id", methods=["POST"])
-def get_unionID():
+def get_union_id():
     # 获取请求体参数
     params = request.get_json()
     JSCODE = params["code"]
