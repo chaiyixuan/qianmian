@@ -149,9 +149,9 @@ def login():
     # unionID = request.headers.get('x-wx-unionid')
     if len(openID)>0:
         # 查询是否注册,没有就新增，有就返回
-        user = query_memberbyid(openID)
+        user = query_userbyid(openID)
         if user:
-            return make_succ_response({"uid": uid})
+            return make_succ_response({"uid": user.uid})
         else:
             uid = register(openID)
             return make_succ_response({"uid": uid})
