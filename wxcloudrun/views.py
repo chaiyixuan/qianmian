@@ -69,8 +69,8 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/api/user/register", methods=["POST"])
-def register():
+
+def register(uid):
     """
     注册用户
     :return:
@@ -79,19 +79,21 @@ def register():
     # 获取请求体参数
     params = request.get_json()
 
-    username = params["username"]
+    # username = params["username"]
 
     uid = generate_uid()
     user = User()
-    user.username = username
+    # user.username = username
     user.uid = uid
     user.created_at = datetime.now()
     user.updated_at = datetime.now()
     try:
         insert_user(user)
-        return make_succ_response(uid)
+        return uid
+        # return make_succ_response(uid)
     except Exception as e:
-        return make_err_response(e)
+        return ""
+        # return make_err_response(e)
 
 
 app.route("/api/member/buy_membership", methods=["POST"])
@@ -143,12 +145,20 @@ def login():
     # 获取请求体参数s
    
     openID = request.headers.get('x-wx-openid')
-    unionID = request.headers.get('x-wx-unionid')
-    return make_succ_response(
-        {   "openID": openID,
-            "unionID": unionID
-        }
-    )
+    # unionID认证后才会有
+    # unionID = request.headers.get('x-wx-unionid')
+    if len(openID)>0:
+        # 查询是否注册,没有就新增，有就返回
+        user = query_memberbyid(openID)
+        if user:
+            return make_succ_response({"uid": uid})
+        else:
+            uid = register(openID)
+            return make_succ_response({"uid": uid})
+    else:
+        return make_err_response("没有获得用户id")
+    
+
     
 
 @app.route("/api/user/get_union_id", methods=["POST"])
