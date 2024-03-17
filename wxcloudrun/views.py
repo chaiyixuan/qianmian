@@ -151,7 +151,7 @@ def login():
         # 查询是否注册,没有就新增，有就返回
         user = query_userbyid(openID)
         if user:
-            return make_succ_response({"uid": user.uid})
+            return make_succ_response({"uid": openID})
         else:
             uid = register(openID)
             return make_succ_response({"uid": uid})
